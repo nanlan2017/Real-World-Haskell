@@ -21,6 +21,17 @@ description:         Please see the README on GitHub at <https://github.com/gith
 
 dependencies:
 - base >= 4.7 && < 5
+# 手动添加
+- bytestring
+- directory
+- random
+- old-time
+- array
+- filepath
+- regex-posix
+- mtl
+- parsec
+- containers
 
 library:
   source-dirs: src
