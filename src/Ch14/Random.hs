@@ -25,7 +25,7 @@ type RandomState a = State StdGen a  -- 注意是type 别名方式
 {-
 -- State 不是 Monad， 
 -- 你自己定义的 State s 才对应为 Monad的m ， 
--- State s a 已经默认实现了诸多计算接口：  runState, returnState, bindState, get, put , ▒▒ evalState, execState
+-- ▒▒▒▒▒▒▒▒▒▒▒▒ State s a 已经默认实现了诸多计算接口：  runState, returnState, bindState, get, put , ▒▒ evalState, execState
   ▒▒▒▒▒▒▒▒▒▒▒▒ MonadState ▒▒▒▒▒▒▒▒▒▒▒▒▒  State s 有没有默认已注册为 Monad （既然bindState是已实现的，那注册为 Monad 的bind 也可以吧？？
 -- 若要让 State s 成为 Monad，要自己去实现 instance Monad XxState 中的 bind 行为 ???
 -}
@@ -44,10 +44,11 @@ getTwoRandoms :: Random a => RandomState (a, a)
 getTwoRandoms = liftM2 (,) getRandom getRandom
 -- ******************************** 测试  *****************************************************************
 --  State 的 值构造器未 导出，所以是无法自己去构造 State 值的、也无法在实现中对其值进行模式匹配
-checkResult :: RandomState a -> IO a
+checkResult :: (Show a) => RandomState a -> IO a
 checkResult s = do
     gen <- getStdGen
     let (result, gen') = runState s gen
+    putStrLn $ show result
     return result
 {-
 *Random> twoBadRandoms  <$>  getStdGen
@@ -65,3 +66,25 @@ v00 :: Random a => IO a  -- 测试发现：多次运行，产生的随机数一�
 v00 = do
     gen <- getStdGen
     return (fst $ runState getRandom gen)
+-- ******************************** 测试  *****************************************************************
+-- |  练习题： 用do 重写getRandom
+getRandom' :: Random a => RandomState a
+getRandom' = do
+    gen <- get
+    let (val, gen') = random gen
+    put gen'
+    return val
+
+
+doGetRandom :: Random a => RandomState a
+doGetRandom = do
+    (val, gen') <- random `liftM` get
+    state (\s -> (val, gen'))
+
+-- *************************************************************************************************
+runTwoRandoms :: IO (Int, Int)
+runTwoRandoms = do
+    oldState <- getStdGen
+    let (result, newState) = runState getTwoRandoms oldState
+    setStdGen newState  --IO 这个 Monad Context 里有很多资源，比如 StdGen
+    return result
